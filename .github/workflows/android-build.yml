@@ -1,0 +1,51 @@
+name: Build ChordFlow Android APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find and extract ChordFlow source ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP_FILE="$(find . -maxdepth 1 -type f -name 'chordflow-native-v0.8.0-source*.zip' -print -quit)"
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ChordFlow source ZIP was not found in repository root."
+            exit 1
+          fi
+          unzip -q "$ZIP_FILE"
+          test -d chordflow_native_v08
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Build debug APK
+        working-directory: chordflow_native_v08
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChordFlow-beta-apk
+          path: chordflow_native_v08/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
