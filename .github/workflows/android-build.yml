@@ -16,15 +16,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Find and extract ChordFlow source ZIP
+      - name: Find and extract latest ChordFlow source ZIP
         shell: bash
         run: |
           set -euo pipefail
-          ZIP_FILE="$(find . -maxdepth 1 -type f -name 'chordflow-native-v0.8.0-source*.zip' -print -quit)"
+          ZIP_FILE="$(find . -maxdepth 1 -type f -name 'chordflow-native-v*.zip' -printf '%f\n' | sort -V | tail -n 1)"
           if [ -z "$ZIP_FILE" ]; then
             echo "ChordFlow source ZIP was not found in repository root."
             exit 1
           fi
+          echo "Using $ZIP_FILE"
           unzip -q "$ZIP_FILE"
           test -d chordflow_native_v08
 
